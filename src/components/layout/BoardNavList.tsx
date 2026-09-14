@@ -1,7 +1,8 @@
 "use client";
 
-import { LayoutDashboard, Plus } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CreateBoardModal } from "@/components/modals/CreateBoardModal";
 import type { Board } from "@/types/kanban";
 
 type BoardNavListProps = {
@@ -43,13 +44,7 @@ export function BoardNavList({
           );
         })}
         <li>
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-r-full py-3 pr-6 pl-6 text-sm font-bold text-primary transition-colors hover:text-primary/80"
-          >
-            <Plus className="size-4 shrink-0" />
-            <span>Create New Board</span>
-          </button>
+          <CreateBoardModal />
         </li>
       </ul>
     </nav>

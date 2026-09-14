@@ -17,7 +17,7 @@ export const mockBoards: Board[] = [
     name: "Platform Launch",
     columns: [
       {
-        id: "todo",
+        id: "platform-launch-todo",
         name: "Todo",
         tasks: [
           {
@@ -55,7 +55,7 @@ export const mockBoards: Board[] = [
         ],
       },
       {
-        id: "doing",
+        id: "platform-launch-doing",
         name: "Doing",
         tasks: [
           {
@@ -121,7 +121,7 @@ export const mockBoards: Board[] = [
         ],
       },
       {
-        id: "done",
+        id: "platform-launch-done",
         name: "Done",
         tasks: [
           {
@@ -188,18 +188,18 @@ export const mockBoards: Board[] = [
     id: "marketing-plan",
     name: "Marketing Plan",
     columns: [
-      { id: "todo", name: "Todo", tasks: [] },
-      { id: "doing", name: "Doing", tasks: [] },
-      { id: "done", name: "Done", tasks: [] },
+      { id: "marketing-plan-todo", name: "Todo", tasks: [] },
+      { id: "marketing-plan-doing", name: "Doing", tasks: [] },
+      { id: "marketing-plan-done", name: "Done", tasks: [] },
     ],
   },
   {
     id: "roadmap",
     name: "Roadmap",
     columns: [
-      { id: "todo", name: "Todo", tasks: [] },
-      { id: "doing", name: "Doing", tasks: [] },
-      { id: "done", name: "Done", tasks: [] },
+      { id: "roadmap-todo", name: "Todo", tasks: [] },
+      { id: "roadmap-doing", name: "Doing", tasks: [] },
+      { id: "roadmap-done", name: "Done", tasks: [] },
     ],
   },
 ];
