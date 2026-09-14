@@ -1,27 +1,18 @@
-# Current Feature: Dashboard Phase 2 — Static Layout
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Sidebar (desktop): logo, "ALL BOARDS (n)" list with active-board highlight, "+ Create New Board" row, light/dark theme toggle, "Hide Sidebar" control that collapses it with a floating "show sidebar" icon when hidden.
-- Mobile: sidebar hidden by default; header shows a compact board-name selector that opens a drawer (shadcn `Sheet`) listing all boards + the theme toggle — "always a drawer on mobile" per the spec.
-- Header: board title, "+ Add New Task" button (renders, inert this phase), kebab `DropdownMenu` with "Edit Board"/"Delete Board" items present but unwired.
-- Board view: columns rendered horizontally (scrollable on mobile), colored dot + `NAME (count)` header per column, stacked task cards, "+ New Column" ghost column.
-- Task cards: title + "`x of y subtasks`" count, non-interactive this phase.
-- Empty-board state for a board with zero columns.
-- Board/sidebar selection via local `useState` (no Zustand yet).
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Source spec: `context/features/dashboard-phase-2-spec.md` (see its "Prompt for Claude Code" section for full detail).
-- Builds on Phase 1 Foundation (shadcn/ui, theme, types, mock data, `/dashboard` route) — see History below.
-- Match `context/screenshots/dashboard-ui2.jpg` for desktop layout.
-- Out of scope this phase: Zustand store, localStorage persistence, drag-and-drop, working Add/Edit/Delete modals (phase 3 — `dashboard-phase-3-spec.md`).
-- After implementation: run `npx tsc --noEmit`, `npm run lint`, `npm run build`, fix all errors, explain what changed, and wait for approval before starting phase 3.
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
 - **Dashboard Phase 1 — Foundation** (2026-09-13): shadcn/ui initialized and themed to the Kanban 5-color palette (light/dark), `Plus Jakarta Sans` font, dark-mode-by-default, `Subtask`/`Task`/`Column`/`Board` types, mock data (3 boards), board moved to `/dashboard`. See `context/features/dashboard-phase-1-spec.md`. Next: phase 2 (static layout).
+- **Dashboard Phase 2 — Static Layout** (2026-09-13): full static layout at `/dashboard` — collapsible desktop sidebar, mobile drawer board switcher, header (inert Add Task button, unwired board options menu), board/column/task-card views wired to mock data via local `useState`, empty-board state. See `context/features/dashboard-phase-2-spec.md`. Verified via `tsc`/lint/build; not yet checked visually in a browser (Claude in Chrome declined this session). Next: phase 3 (state, working modals, drag-and-drop).
