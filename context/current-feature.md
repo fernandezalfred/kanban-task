@@ -1,16 +1,26 @@
-# Current Feature
+# Current Feature: Dashboard Phase 2 — Static Layout
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Sidebar (desktop): logo, "ALL BOARDS (n)" list with active-board highlight, "+ Create New Board" row, light/dark theme toggle, "Hide Sidebar" control that collapses it with a floating "show sidebar" icon when hidden.
+- Mobile: sidebar hidden by default; header shows a compact board-name selector that opens a drawer (shadcn `Sheet`) listing all boards + the theme toggle — "always a drawer on mobile" per the spec.
+- Header: board title, "+ Add New Task" button (renders, inert this phase), kebab `DropdownMenu` with "Edit Board"/"Delete Board" items present but unwired.
+- Board view: columns rendered horizontally (scrollable on mobile), colored dot + `NAME (count)` header per column, stacked task cards, "+ New Column" ghost column.
+- Task cards: title + "`x of y subtasks`" count, non-interactive this phase.
+- Empty-board state for a board with zero columns.
+- Board/sidebar selection via local `useState` (no Zustand yet).
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Source spec: `context/features/dashboard-phase-2-spec.md` (see its "Prompt for Claude Code" section for full detail).
+- Builds on Phase 1 Foundation (shadcn/ui, theme, types, mock data, `/dashboard` route) — see History below.
+- Match `context/screenshots/dashboard-ui2.jpg` for desktop layout.
+- Out of scope this phase: Zustand store, localStorage persistence, drag-and-drop, working Add/Edit/Delete modals (phase 3 — `dashboard-phase-3-spec.md`).
+- After implementation: run `npx tsc --noEmit`, `npm run lint`, `npm run build`, fix all errors, explain what changed, and wait for approval before starting phase 3.
 
 ## History
 
