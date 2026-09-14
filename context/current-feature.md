@@ -1,16 +1,26 @@
-# Current Feature
+# Current Feature: Dashboard Phase 3 — State, Modals, Interactions & Polish
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Zustand store (`src/store/kanban-store.ts`) implementing `createBoard`, `updateBoard`, `deleteBoard`, `selectBoard`, `createColumn`, `updateColumn`, `deleteColumn`, `createTask`, `updateTask`, `deleteTask`, `moveTask`, `toggleSubtask` (`context/project-overview.md` §8), persisted to `localStorage`, seeded from `src/lib/mock-data.ts`.
+- Replace phase-2's local `useState` board/sidebar selection with the store where appropriate.
+- Working "Add New Task" modal (matches `dashboard-ui.jpg`): title, description, dynamic subtask rows, status dropdown, Zod validation, wired to `createTask`.
+- Working Task Details modal (matches `dashboard-ui3.jpg`): title, description, subtask checklist (toggling persists via `toggleSubtask`), status dropdown, edit/delete via kebab menu.
+- Working Edit Task, Create Board, Edit Board, and Delete Confirmation (board/column/task) modals — destructive actions always confirm first and use the danger color only for the destructive button.
+- Column create/rename/delete.
+- Drag-and-drop task movement between columns (`@dnd-kit/core` + `@dnd-kit/sortable`) calling `moveTask`, plus a keyboard-accessible alternative for moving a task without a mouse.
+- Final polish: modal/drag animations, loading/error states, full keyboard navigation and focus management, color-contrast check in both themes, no console errors.
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Source spec: `context/features/dashboard-phase-3-spec.md` (see its "Prompt for Claude Code" section for full detail).
+- Builds on Phase 1 (Foundation) and Phase 2 (Static Layout) — see History below.
+- This is the last of the 3 dashboard phases — after this, walk through `context/project-overview.md` §11 Definition of Done before considering the feature complete.
+- After implementation: run `npx tsc --noEmit`, `npm run lint`, `npm run build`, fix all errors, and verify in a browser (drag-and-drop and modals are genuinely interactive — type-checking alone won't catch UX/behavior issues).
 
 ## History
 
