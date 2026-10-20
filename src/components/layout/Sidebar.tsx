@@ -11,6 +11,7 @@ type SidebarProps = {
   boards: Board[];
   selectedBoardId: string;
   onSelectBoard: (boardId: string) => void;
+  onBoardCreated: (boardId: string) => void;
   onHide: () => void;
   className?: string;
 };
@@ -19,6 +20,7 @@ export function Sidebar({
   boards,
   selectedBoardId,
   onSelectBoard,
+  onBoardCreated,
   onHide,
   className,
 }: SidebarProps) {
@@ -37,6 +39,7 @@ export function Sidebar({
           boards={boards}
           selectedBoardId={selectedBoardId}
           onSelectBoard={onSelectBoard}
+          onBoardCreated={onBoardCreated}
         />
       </div>
       <div className="flex flex-col gap-4 px-6 pb-8">

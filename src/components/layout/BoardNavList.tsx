@@ -9,12 +9,14 @@ type BoardNavListProps = {
   boards: Board[];
   selectedBoardId: string;
   onSelectBoard: (boardId: string) => void;
+  onBoardCreated: (boardId: string) => void;
 };
 
 export function BoardNavList({
   boards,
   selectedBoardId,
   onSelectBoard,
+  onBoardCreated,
 }: BoardNavListProps) {
   return (
     <nav className="flex flex-col gap-1" aria-label="Boards">
@@ -44,7 +46,7 @@ export function BoardNavList({
           );
         })}
         <li>
-          <CreateBoardModal />
+          <CreateBoardModal onCreated={onBoardCreated} />
         </li>
       </ul>
     </nav>

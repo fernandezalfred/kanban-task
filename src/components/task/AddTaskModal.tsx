@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -11,36 +12,37 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TaskForm, type TaskFormValues } from "./TaskForm";
-import { useKanbanStore } from "@/store/kanban-store";
-import type { Board, Task } from "@/types/kanban";
+import { createTask } from "@/actions/tasks";
+import type { Board } from "@/types/kanban";
 
 export function AddTaskModal({ board }: { board: Board }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
-  const createTask = useKanbanStore((state) => state.createTask);
+  const [error, setError] = useState<string | null>(null);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (next) setFormKey((key) => key + 1);
+    if (next) {
+      setFormKey((key) => key + 1);
+      setError(null);
+    }
   }
 
-  function handleSubmit(values: TaskFormValues) {
-    const column = board.columns.find((c) => c.id === values.columnId);
-    if (!column) return;
-
-    const task: Task = {
-      id: crypto.randomUUID(),
+  async function handleSubmit(values: TaskFormValues) {
+    const result = await createTask({
+      columnId: values.columnId,
       title: values.title,
       description: values.description,
-      status: column.name,
-      subtasks: values.subtasks.map((subtask) => ({
-        id: subtask.id,
-        title: subtask.title,
-        isCompleted: false,
-      })),
-    };
+      subtasks: values.subtasks.map((subtask) => ({ title: subtask.title })),
+    });
 
-    createTask(values.columnId, task);
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+
+    router.refresh();
     setOpen(false);
   }
 
@@ -75,6 +77,7 @@ export function AddTaskModal({ board }: { board: Board }) {
           submitLabel="Create Task"
           onSubmit={handleSubmit}
         />
+        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

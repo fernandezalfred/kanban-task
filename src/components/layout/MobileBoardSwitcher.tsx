@@ -18,6 +18,7 @@ type MobileBoardSwitcherProps = {
   selectedBoardId: string;
   selectedBoardName: string;
   onSelectBoard: (boardId: string) => void;
+  onBoardCreated: (boardId: string) => void;
 };
 
 export function MobileBoardSwitcher({
@@ -25,6 +26,7 @@ export function MobileBoardSwitcher({
   selectedBoardId,
   selectedBoardName,
   onSelectBoard,
+  onBoardCreated,
 }: MobileBoardSwitcherProps) {
   const [open, setOpen] = useState(false);
 
@@ -49,6 +51,10 @@ export function MobileBoardSwitcher({
             selectedBoardId={selectedBoardId}
             onSelectBoard={(boardId) => {
               onSelectBoard(boardId);
+              setOpen(false);
+            }}
+            onBoardCreated={(boardId) => {
+              onBoardCreated(boardId);
               setOpen(false);
             }}
           />

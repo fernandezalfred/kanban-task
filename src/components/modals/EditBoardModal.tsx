@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BoardForm, type BoardFormValues } from "./BoardForm";
-import { useKanbanStore } from "@/store/kanban-store";
+import {
+  updateBoard,
+  createColumn,
+  updateColumn,
+  deleteColumn,
+} from "@/actions/boards";
 import type { Board } from "@/types/kanban";
 
 type EditBoardModalProps = {
@@ -22,38 +28,48 @@ export function EditBoardModal({
   open,
   onOpenChange,
 }: EditBoardModalProps) {
+  const router = useRouter();
   const [formKey, setFormKey] = useState(0);
-  const updateBoard = useKanbanStore((state) => state.updateBoard);
-  const createColumn = useKanbanStore((state) => state.createColumn);
-  const updateColumn = useKanbanStore((state) => state.updateColumn);
-  const deleteColumn = useKanbanStore((state) => state.deleteColumn);
+  const [error, setError] = useState<string | null>(null);
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
-    if (next) setFormKey((key) => key + 1);
+    if (next) {
+      setFormKey((key) => key + 1);
+      setError(null);
+    }
   }
 
-  function handleSubmit(values: BoardFormValues) {
+  async function handleSubmit(values: BoardFormValues) {
+    const operations: Promise<{ success: boolean }>[] = [];
+
     if (values.name !== board.name) {
-      updateBoard(board.id, values.name);
+      operations.push(updateBoard({ boardId: board.id, name: values.name }));
     }
 
     const submittedIds = new Set(values.columns.map((c) => c.id));
     for (const original of board.columns) {
       if (!submittedIds.has(original.id)) {
-        deleteColumn(original.id);
+        operations.push(deleteColumn({ columnId: original.id }));
       }
     }
 
     for (const column of values.columns) {
       const original = board.columns.find((c) => c.id === column.id);
       if (!original) {
-        createColumn(board.id, column.name);
+        operations.push(createColumn({ boardId: board.id, name: column.name }));
       } else if (original.name !== column.name) {
-        updateColumn(column.id, column.name);
+        operations.push(updateColumn({ columnId: column.id, name: column.name }));
       }
     }
 
+    const results = await Promise.all(operations);
+    if (results.some((result) => !result.success)) {
+      setError("Some changes failed to save. Please try again.");
+      return;
+    }
+
+    router.refresh();
     onOpenChange(false);
   }
 
@@ -74,6 +90,7 @@ export function EditBoardModal({
           submitLabel="Save Changes"
           onSubmit={handleSubmit}
         />
+        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

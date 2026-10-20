@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import {
   Dialog,
@@ -25,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { EditTaskModal } from "./EditTaskModal";
 import { DeleteConfirmationDialog } from "@/components/modals/DeleteConfirmationDialog";
-import { useKanbanStore } from "@/store/kanban-store";
+import { toggleSubtask, moveTask, deleteTask } from "@/actions/tasks";
 import { cn } from "@/lib/utils";
 import type { Column, Task } from "@/types/kanban";
 
@@ -44,17 +45,32 @@ export function TaskDetailsModal({
   open,
   onOpenChange,
 }: TaskDetailsModalProps) {
-  const toggleSubtask = useKanbanStore((state) => state.toggleSubtask);
-  const moveTask = useKanbanStore((state) => state.moveTask);
-  const deleteTask = useKanbanStore((state) => state.deleteTask);
+  const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const completedCount = task.subtasks.filter((s) => s.isCompleted).length;
 
-  function handleStatusChange(newColumnId: string) {
+  async function handleToggleSubtask(subtaskId: string) {
+    const result = await toggleSubtask({ subtaskId });
+    if (result.success) router.refresh();
+  }
+
+  async function handleStatusChange(newColumnId: string) {
     if (newColumnId === columnId) return;
-    moveTask(task.id, columnId, newColumnId);
+    const result = await moveTask({
+      taskId: task.id,
+      destinationColumnId: newColumnId,
+    });
+    if (result.success) router.refresh();
+  }
+
+  async function handleDeleteTask() {
+    const result = await deleteTask({ taskId: task.id });
+    if (result.success) {
+      router.refresh();
+      onOpenChange(false);
+    }
   }
 
   return (
@@ -105,9 +121,7 @@ export function TaskDetailsModal({
                   >
                     <Checkbox
                       checked={subtask.isCompleted}
-                      onCheckedChange={() =>
-                        toggleSubtask(task.id, subtask.id)
-                      }
+                      onCheckedChange={() => handleToggleSubtask(subtask.id)}
                     />
                     <span
                       className={cn(
@@ -126,6 +140,7 @@ export function TaskDetailsModal({
           <div className="flex flex-col gap-2">
             <Label>Status</Label>
             <Select
+              items={Object.fromEntries(columns.map((column) => [column.id, column.name]))}
               value={columnId}
               onValueChange={(value) => handleStatusChange(value as string)}
             >
@@ -156,10 +171,7 @@ export function TaskDetailsModal({
         onOpenChange={setDeleteOpen}
         title="Delete this task?"
         description={`Are you sure you want to delete the '${task.title}' task and its subtasks? This action cannot be reversed.`}
-        onConfirm={() => {
-          deleteTask(task.id);
-          onOpenChange(false);
-        }}
+        onConfirm={handleDeleteTask}
       />
     </>
   );

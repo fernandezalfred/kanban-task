@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TaskForm, type TaskFormValues } from "./TaskForm";
-import { useKanbanStore } from "@/store/kanban-store";
+import { updateTask } from "@/actions/tasks";
 import type { Column, Task } from "@/types/kanban";
 
 type EditTaskModalProps = {
@@ -26,23 +27,24 @@ export function EditTaskModal({
   open,
   onOpenChange,
 }: EditTaskModalProps) {
+  const router = useRouter();
   const [formKey, setFormKey] = useState(0);
-  const updateTask = useKanbanStore((state) => state.updateTask);
-  const moveTask = useKanbanStore((state) => state.moveTask);
+  const [error, setError] = useState<string | null>(null);
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
-    if (next) setFormKey((key) => key + 1);
+    if (next) {
+      setFormKey((key) => key + 1);
+      setError(null);
+    }
   }
 
-  function handleSubmit(values: TaskFormValues) {
-    const column = columns.find((c) => c.id === values.columnId);
-    if (!column) return;
-
-    updateTask(task.id, {
+  async function handleSubmit(values: TaskFormValues) {
+    const result = await updateTask({
+      taskId: task.id,
+      columnId: values.columnId,
       title: values.title,
       description: values.description,
-      status: column.name,
       subtasks: values.subtasks.map((subtask) => ({
         id: subtask.id,
         title: subtask.title,
@@ -52,10 +54,12 @@ export function EditTaskModal({
       })),
     });
 
-    if (values.columnId !== columnId) {
-      moveTask(task.id, columnId, values.columnId);
+    if (!result.success) {
+      setError(result.error);
+      return;
     }
 
+    router.refresh();
     onOpenChange(false);
   }
 
@@ -77,6 +81,7 @@ export function EditTaskModal({
           submitLabel="Save Changes"
           onSubmit={handleSubmit}
         />
+        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

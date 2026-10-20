@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useOptimistic, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -11,7 +12,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import type { Board, Task } from "@/types/kanban";
-import { useKanbanStore } from "@/store/kanban-store";
+import { moveTask } from "@/actions/tasks";
 import { BoardColumn } from "./BoardColumn";
 import { EmptyBoard } from "./EmptyBoard";
 import { EditBoardModal } from "@/components/modals/EditBoardModal";
@@ -25,20 +26,51 @@ function findTask(board: Board, taskId: string): Task | undefined {
   return undefined;
 }
 
+type MoveTaskAction = { taskId: string; destinationColumnId: string };
+
+function applyMoveTask(board: Board, action: MoveTaskAction): Board {
+  let movedTask: Task | undefined;
+  const columnsWithoutTask = board.columns.map((column) => {
+    const task = column.tasks.find((t) => t.id === action.taskId);
+    if (task) movedTask = task;
+    return {
+      ...column,
+      tasks: column.tasks.filter((t) => t.id !== action.taskId),
+    };
+  });
+
+  const destinationColumn = columnsWithoutTask.find(
+    (column) => column.id === action.destinationColumnId
+  );
+  if (!movedTask || !destinationColumn) return board;
+
+  const updatedTask: Task = { ...movedTask, status: destinationColumn.name };
+
+  return {
+    ...board,
+    columns: columnsWithoutTask.map((column) =>
+      column.id === action.destinationColumnId
+        ? { ...column, tasks: [...column.tasks, updatedTask] }
+        : column
+    ),
+  };
+}
+
 export function BoardView({ board }: { board: Board }) {
-  const moveTask = useKanbanStore((state) => state.moveTask);
+  const router = useRouter();
+  const [optimisticBoard, applyMove] = useOptimistic(board, applyMoveTask);
   const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  if (board.columns.length === 0) {
+  if (optimisticBoard.columns.length === 0) {
     return <EmptyBoard board={board} />;
   }
 
   function handleDragStart(event: DragStartEvent) {
-    setActiveTask(findTask(board, event.active.id as string) ?? null);
+    setActiveTask(findTask(optimisticBoard, event.active.id as string) ?? null);
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -50,25 +82,34 @@ export function BoardView({ board }: { board: Board }) {
       | string
       | undefined;
     const destinationColumnId = over.id as string;
+    const taskId = active.id as string;
 
     if (!sourceColumnId || sourceColumnId === destinationColumnId) return;
-    moveTask(active.id as string, sourceColumnId, destinationColumnId);
+
+    startTransition(async () => {
+      applyMove({ taskId, destinationColumnId });
+      const result = await moveTask({ taskId, destinationColumnId });
+      if (result.success) {
+        router.refresh();
+      }
+    });
   }
 
   return (
     <DndContext
+      id="kanban-board"
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveTask(null)}
     >
       <div className="flex flex-1 gap-6 overflow-x-auto px-4 py-6 sm:px-6">
-        {board.columns.map((column, index) => (
+        {optimisticBoard.columns.map((column, index) => (
           <BoardColumn
             key={column.id}
             column={column}
             index={index}
-            columns={board.columns}
+            columns={optimisticBoard.columns}
           />
         ))}
         <div className="flex w-[280px] shrink-0 items-stretch">

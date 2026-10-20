@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
@@ -11,7 +12,7 @@ import {
 import { AddTaskModal } from "@/components/task/AddTaskModal";
 import { EditBoardModal } from "@/components/modals/EditBoardModal";
 import { DeleteConfirmationDialog } from "@/components/modals/DeleteConfirmationDialog";
-import { useKanbanStore } from "@/store/kanban-store";
+import { deleteBoard as deleteBoardAction } from "@/actions/boards";
 import type { Board } from "@/types/kanban";
 import { Logo } from "./Logo";
 import { MobileBoardSwitcher } from "./MobileBoardSwitcher";
@@ -21,6 +22,7 @@ type HeaderProps = {
   boards: Board[];
   selectedBoardId: string;
   onSelectBoard: (boardId: string) => void;
+  onBoardCreated: (boardId: string) => void;
 };
 
 export function Header({
@@ -28,10 +30,18 @@ export function Header({
   boards,
   selectedBoardId,
   onSelectBoard,
+  onBoardCreated,
 }: HeaderProps) {
-  const deleteBoard = useKanbanStore((state) => state.deleteBoard);
+  const router = useRouter();
   const [editBoardOpen, setEditBoardOpen] = useState(false);
   const [deleteBoardOpen, setDeleteBoardOpen] = useState(false);
+
+  async function handleDeleteBoard() {
+    const result = await deleteBoardAction({ boardId: board.id });
+    if (result.success) {
+      router.refresh();
+    }
+  }
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-border bg-card px-4 py-4 sm:px-6">
@@ -48,6 +58,7 @@ export function Header({
             selectedBoardId={selectedBoardId}
             selectedBoardName={board.name}
             onSelectBoard={onSelectBoard}
+            onBoardCreated={onBoardCreated}
           />
         </div>
       </div>
@@ -85,7 +96,7 @@ export function Header({
         onOpenChange={setDeleteBoardOpen}
         title="Delete this board?"
         description={`Are you sure you want to delete the '${board.name}' board? This action will remove all columns and tasks and cannot be reversed.`}
-        onConfirm={() => deleteBoard(board.id)}
+        onConfirm={handleDeleteBoard}
       />
     </header>
   );
