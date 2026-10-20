@@ -144,6 +144,7 @@ export function TaskForm({
       <div className="flex flex-col gap-2">
         <Label>Status</Label>
         <Select
+          items={Object.fromEntries(columns.map((column) => [column.id, column.name]))}
           value={columnId}
           onValueChange={(value) => setColumnId(value as string)}
         >

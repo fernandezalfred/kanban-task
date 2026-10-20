@@ -1,30 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useKanbanStore, useHasHydrated } from "@/store/kanban-store";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ShowSidebarButton } from "@/components/layout/ShowSidebarButton";
 import { Header } from "@/components/layout/Header";
 import { BoardView } from "@/components/board/BoardView";
 import { CreateBoardModal } from "@/components/modals/CreateBoardModal";
+import type { Board } from "@/types/kanban";
 
-export function DashboardShell() {
-  const hydrated = useHasHydrated();
-  const boards = useKanbanStore((state) => state.boards);
-  const selectedBoardId = useKanbanStore((state) => state.selectedBoardId);
-  const selectBoard = useKanbanStore((state) => state.selectBoard);
+export function DashboardShell({ boards }: { boards: Board[] }) {
+  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(
+    () => boards[0]?.id ?? null
+  );
+  const [prevBoards, setPrevBoards] = useState(boards);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const selectedBoard =
-    boards.find((board) => board.id === selectedBoardId) ?? boards[0];
-
-  if (!hydrated) {
-    return (
-      <div className="flex h-dvh items-center justify-center bg-background">
-        <p className="text-sm font-bold text-muted-foreground">Loading…</p>
-      </div>
-    );
+  let effectiveSelectedBoardId = selectedBoardId;
+  if (boards !== prevBoards) {
+    setPrevBoards(boards);
+    if (!boards.some((board) => board.id === selectedBoardId)) {
+      effectiveSelectedBoardId = boards[0]?.id ?? null;
+      setSelectedBoardId(effectiveSelectedBoardId);
+    }
   }
+
+  const selectedBoard =
+    boards.find((board) => board.id === effectiveSelectedBoardId) ?? boards[0];
 
   if (!selectedBoard) {
     return (
@@ -32,7 +33,7 @@ export function DashboardShell() {
         <p className="max-w-xs text-sm font-bold text-muted-foreground">
           You don&apos;t have any boards yet. Create one to get started.
         </p>
-        <CreateBoardModal />
+        <CreateBoardModal onCreated={setSelectedBoardId} />
       </div>
     );
   }
@@ -43,7 +44,8 @@ export function DashboardShell() {
         <Sidebar
           boards={boards}
           selectedBoardId={selectedBoard.id}
-          onSelectBoard={selectBoard}
+          onSelectBoard={setSelectedBoardId}
+          onBoardCreated={setSelectedBoardId}
           onHide={() => setSidebarOpen(false)}
           className="hidden lg:flex"
         />
@@ -59,7 +61,8 @@ export function DashboardShell() {
           board={selectedBoard}
           boards={boards}
           selectedBoardId={selectedBoard.id}
-          onSelectBoard={selectBoard}
+          onSelectBoard={setSelectedBoardId}
+          onBoardCreated={setSelectedBoardId}
         />
         <main className="flex flex-1 overflow-hidden">
           <BoardView board={selectedBoard} />

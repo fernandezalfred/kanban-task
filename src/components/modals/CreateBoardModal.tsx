@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -10,27 +11,39 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { BoardForm, type BoardFormValues } from "./BoardForm";
-import { useKanbanStore } from "@/store/kanban-store";
+import { createBoard } from "@/actions/boards";
 
-export function CreateBoardModal() {
+export function CreateBoardModal({
+  onCreated,
+}: {
+  onCreated: (boardId: string) => void;
+}) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
-  const createBoard = useKanbanStore((state) => state.createBoard);
-  const createColumn = useKanbanStore((state) => state.createColumn);
+  const [error, setError] = useState<string | null>(null);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (next) setFormKey((key) => key + 1);
+    if (next) {
+      setFormKey((key) => key + 1);
+      setError(null);
+    }
   }
 
-  function handleSubmit(values: BoardFormValues) {
-    createBoard(values.name);
-    const newBoardId = useKanbanStore.getState().selectedBoardId;
-    if (newBoardId) {
-      for (const column of values.columns) {
-        createColumn(newBoardId, column.name);
-      }
+  async function handleSubmit(values: BoardFormValues) {
+    const result = await createBoard({
+      name: values.name,
+      columnNames: values.columns.map((column) => column.name),
+    });
+
+    if (!result.success) {
+      setError(result.error);
+      return;
     }
+
+    onCreated(result.data.id);
+    router.refresh();
     setOpen(false);
   }
 
@@ -65,6 +78,7 @@ export function CreateBoardModal() {
           submitLabel="Create New Board"
           onSubmit={handleSubmit}
         />
+        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );
