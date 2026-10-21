@@ -1,16 +1,22 @@
-# Current Feature
+# Current Feature: Board Slug in URL
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- When a board is selected from the sidebar (or header board switcher), the URL updates to reflect which board is active (e.g. `/dashboard/[slug]`).
+- Loading `/dashboard/[slug]` directly (refresh, bookmark, shared link) opens that board selected, not just the first board.
+- Plain `/dashboard` still works and falls back to selecting the first board (redirect or default behavior), to avoid a hard breaking change.
+- Browser back/forward navigates between previously visited boards.
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- `Board` has no `slug` field today (`src/types/kanban.ts`, `prisma/schema.prisma`) — board names aren't guaranteed unique. Plan: derive the slug from the board name at render/lookup time (kebab-case, e.g. "Platform Launch" → `platform-launch`) rather than adding a persisted `slug` field/migration, since this is routing sugar, not new stored data. On a name collision, disambiguate by falling back to matching the first board whose slugified name matches (acceptable given boards are scoped to one user's small board list).
+- Current routing is `src/app/dashboard/page.tsx` → single `DashboardShell` client component (`src/components/dashboard/DashboardShell.tsx`) that holds `selectedBoardId` in local `useState` only; no URL involvement at all today. This needs to move toward a dynamic segment (`src/app/dashboard/[slug]/page.tsx`) with `DashboardShell` driven by the slug from the route (via `useRouter`/`usePathname` or passed down from the server component), instead of pure local state.
+- Board switching currently happens in two places: `Sidebar` → `BoardNavList`, and `Header`'s board switcher — both call `onSelectBoard`/`onBoardCreated` callbacks from `DashboardShell`. Both need to trigger a navigation (`router.push`) to the new board's slug instead of (or in addition to) local state.
+- Keep this scoped to navigation/URL only — no change to board CRUD, layout, or data model persistence.
 
 ## History
 

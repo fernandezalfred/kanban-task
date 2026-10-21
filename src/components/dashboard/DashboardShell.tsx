@@ -1,31 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ShowSidebarButton } from "@/components/layout/ShowSidebarButton";
 import { Header } from "@/components/layout/Header";
 import { BoardView } from "@/components/board/BoardView";
 import { CreateBoardModal } from "@/components/modals/CreateBoardModal";
+import { slugify, findBoardBySlug } from "@/lib/slug";
 import type { Board } from "@/types/kanban";
 
-export function DashboardShell({ boards }: { boards: Board[] }) {
-  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(
-    () => boards[0]?.id ?? null
-  );
-  const [prevBoards, setPrevBoards] = useState(boards);
+export function DashboardShell({
+  boards,
+  activeSlug,
+}: {
+  boards: Board[];
+  activeSlug: string | null;
+}) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  let effectiveSelectedBoardId = selectedBoardId;
-  if (boards !== prevBoards) {
-    setPrevBoards(boards);
-    if (!boards.some((board) => board.id === selectedBoardId)) {
-      effectiveSelectedBoardId = boards[0]?.id ?? null;
-      setSelectedBoardId(effectiveSelectedBoardId);
+  const selectedBoard =
+    (activeSlug ? findBoardBySlug(boards, activeSlug) : undefined) ??
+    boards[0];
+
+  function goToBoard(boardId: string) {
+    const board = boards.find((b) => b.id === boardId);
+    if (board) {
+      router.push(`/dashboard/${slugify(board.name)}`);
     }
   }
 
-  const selectedBoard =
-    boards.find((board) => board.id === effectiveSelectedBoardId) ?? boards[0];
+  function goToCreatedBoard(board: { id: string; name: string }) {
+    router.push(`/dashboard/${slugify(board.name)}`);
+  }
 
   if (!selectedBoard) {
     return (
@@ -33,7 +41,7 @@ export function DashboardShell({ boards }: { boards: Board[] }) {
         <p className="max-w-xs text-sm font-bold text-muted-foreground">
           You don&apos;t have any boards yet. Create one to get started.
         </p>
-        <CreateBoardModal onCreated={setSelectedBoardId} />
+        <CreateBoardModal onCreated={goToCreatedBoard} />
       </div>
     );
   }
@@ -44,8 +52,8 @@ export function DashboardShell({ boards }: { boards: Board[] }) {
         <Sidebar
           boards={boards}
           selectedBoardId={selectedBoard.id}
-          onSelectBoard={setSelectedBoardId}
-          onBoardCreated={setSelectedBoardId}
+          onSelectBoard={goToBoard}
+          onBoardCreated={goToCreatedBoard}
           onHide={() => setSidebarOpen(false)}
           className="hidden lg:flex"
         />
@@ -61,8 +69,8 @@ export function DashboardShell({ boards }: { boards: Board[] }) {
           board={selectedBoard}
           boards={boards}
           selectedBoardId={selectedBoard.id}
-          onSelectBoard={setSelectedBoardId}
-          onBoardCreated={setSelectedBoardId}
+          onSelectBoard={goToBoard}
+          onBoardCreated={goToCreatedBoard}
         />
         <main className="flex flex-1 overflow-hidden">
           <BoardView board={selectedBoard} />

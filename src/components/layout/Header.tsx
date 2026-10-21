@@ -22,7 +22,7 @@ type HeaderProps = {
   boards: Board[];
   selectedBoardId: string;
   onSelectBoard: (boardId: string) => void;
-  onBoardCreated: (boardId: string) => void;
+  onBoardCreated: (board: { id: string; name: string }) => void;
 };
 
 export function Header({

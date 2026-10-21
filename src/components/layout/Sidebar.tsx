@@ -11,7 +11,7 @@ type SidebarProps = {
   boards: Board[];
   selectedBoardId: string;
   onSelectBoard: (boardId: string) => void;
-  onBoardCreated: (boardId: string) => void;
+  onBoardCreated: (board: { id: string; name: string }) => void;
   onHide: () => void;
   className?: string;
 };

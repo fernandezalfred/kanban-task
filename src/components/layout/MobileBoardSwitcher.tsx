@@ -18,7 +18,7 @@ type MobileBoardSwitcherProps = {
   selectedBoardId: string;
   selectedBoardName: string;
   onSelectBoard: (boardId: string) => void;
-  onBoardCreated: (boardId: string) => void;
+  onBoardCreated: (board: { id: string; name: string }) => void;
 };
 
 export function MobileBoardSwitcher({
@@ -53,8 +53,8 @@ export function MobileBoardSwitcher({
               onSelectBoard(boardId);
               setOpen(false);
             }}
-            onBoardCreated={(boardId) => {
-              onBoardCreated(boardId);
+            onBoardCreated={(board) => {
+              onBoardCreated(board);
               setOpen(false);
             }}
           />

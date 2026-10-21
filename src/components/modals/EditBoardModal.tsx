@@ -15,6 +15,7 @@ import {
   updateColumn,
   deleteColumn,
 } from "@/actions/boards";
+import { slugify } from "@/lib/slug";
 import type { Board } from "@/types/kanban";
 
 type EditBoardModalProps = {
@@ -69,7 +70,11 @@ export function EditBoardModal({
       return;
     }
 
-    router.refresh();
+    if (values.name !== board.name) {
+      router.push(`/dashboard/${slugify(values.name)}`);
+    } else {
+      router.refresh();
+    }
     onOpenChange(false);
   }
 

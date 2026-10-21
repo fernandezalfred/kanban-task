@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -16,9 +15,8 @@ import { createBoard } from "@/actions/boards";
 export function CreateBoardModal({
   onCreated,
 }: {
-  onCreated: (boardId: string) => void;
+  onCreated: (board: { id: string; name: string }) => void;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +40,7 @@ export function CreateBoardModal({
       return;
     }
 
-    onCreated(result.data.id);
-    router.refresh();
+    onCreated(result.data);
     setOpen(false);
   }
 
