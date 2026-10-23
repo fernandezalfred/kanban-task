@@ -21,8 +21,7 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const selectedBoard =
-    (activeSlug ? findBoardBySlug(boards, activeSlug) : undefined) ??
-    boards[0];
+    (activeSlug ? findBoardBySlug(boards, activeSlug) : undefined) ?? boards[0];
 
   function goToBoard(boardId: string) {
     const board = boards.find((b) => b.id === boardId);
@@ -45,7 +44,6 @@ export function DashboardShell({
       </div>
     );
   }
-
   return (
     <div className="flex h-dvh overflow-hidden bg-background">
       {sidebarOpen && (
