@@ -145,11 +145,14 @@ export function TaskDetailsModal({
                     key={subtask.id}
                     className="flex items-center gap-3 rounded-md bg-muted px-3 py-2.5 text-sm"
                   >
-                    <Checkbox
-                      checked={subtask.isCompleted}
-                      disabled={pendingSubtaskIds.has(subtask.id)}
-                      onCheckedChange={() => handleToggleSubtask(subtask.id)}
-                    />
+                    {pendingSubtaskIds.has(subtask.id) ? (
+                      <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Checkbox
+                        checked={subtask.isCompleted}
+                        onCheckedChange={() => handleToggleSubtask(subtask.id)}
+                      />
+                    )}
                     <span
                       className={cn(
                         subtask.isCompleted &&
