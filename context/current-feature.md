@@ -1,32 +1,22 @@
-# Current Feature: Toast Notifications for Errors
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Add `sonner` (the standard shadcn-paired toast lib) and mount a single `<Toaster />` in the root layout.
-- Replace the generic operation-level error surfacing currently done as inline `<p className="text-destructive">{error}</p>` + local `error` state with `toast.error(...)` in:
-  - `CreateBoardModal` (`createBoard` failure)
-  - `EditBoardModal` (`updateBoard`/`createColumn`/`updateColumn`/`deleteColumn` failure — the "Some changes failed to save" case)
-  - `AddTaskModal` (`createTask` failure)
-  - `EditTaskModal` (`updateTask` failure)
-- Add `toast.error(...)` for failures that are currently silently swallowed (no `result.success` check surfaces anything to the user today):
-  - `Header.handleDeleteBoard` (`deleteBoard` failure)
-  - `TaskDetailsModal.handleDeleteTask` (`deleteTask` failure)
-  - `TaskDetailsModal.handleToggleSubtask` (`toggleSubtask` failure)
-  - `TaskDetailsModal.handleStatusChange` (`moveTask` failure)
-  - `BoardView.handleDragEnd` (`moveTask` failure after a drag — the optimistic update currently has no visible rollback/error indicator)
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Scope is **error** toasts only, matching `coding-standards.md`'s "Display user-friendly error messages via toast" — not adding success toasts, which isn't what was asked.
-- Per-field Zod validation errors in `BoardForm`/`TaskForm` (`errors.name`, `errors.title`, `errors.columnId`, etc.) stay as inline text next to their field — that's correct UX for field-level validation and should NOT become toasts.
-- This builds on the loading-states feature just completed (pending states + `DeleteConfirmationDialog` fix) — toasts are the next layer: surfacing the *result* of a request, not just that one is in flight.
-- No other new dependencies beyond `sonner`.
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
+
+- **Toast Notifications for Errors** (2026-10-23): added `sonner` and a theme-aware `<Toaster />` in the root layout (`src/components/ui/sonner.tsx`, reads `next-themes`). Replaced inline per-submission error `<p>` text + local `error` state with `toast.error(...)` in `CreateBoardModal`/`EditBoardModal`/`AddTaskModal`/`EditTaskModal`. Added `toast.error(...)` to 5 paths that previously failed completely silently: `Header.handleDeleteBoard`, `TaskDetailsModal.handleDeleteTask`/`handleToggleSubtask`/`handleStatusChange`, and `BoardView.handleDragEnd`. Per-field Zod validation errors (`errors.name`, `errors.title`, etc.) intentionally left as inline text — correct UX for field-level validation, not converted to toasts. Verified via `tsc`/lint/build/vitest (32 tests) and interactively: reproduced a genuine race (toggling a subtask on a task already deleted in another tab) and confirmed the error toast fires where before there was zero feedback; also confirmed the toast respects the light/dark theme toggle. No console errors during testing, no leftover test data.
+- **Add Loading States to Server Requests** (2026-10-23): every client-triggered Server Action call now shows a visible pending state and disables its control while in flight — `BoardForm`/`TaskForm` submit buttons (via `useTransition` in `CreateBoardModal`/`EditBoardModal`/`AddTaskModal`/`EditTaskModal`), `TaskDetailsModal`'s subtask checkboxes (per-id pending set) and status `Select` (spinner next to the label), and `DeleteConfirmationDialog`. The dialog also now fixes a real bug: it previously closed immediately on click regardless of the async result; it now disables both buttons, shows a spinner, and only closes once `onConfirm` resolves. Added `loading.tsx` for `/dashboard` and `/dashboard/[slug]` (a shared `DashboardSkeleton` component) so navigation shows a skeleton instead of a blank screen while `getBoards()`/`getBoard()` resolve. No new dependencies. Verified via `tsc`/lint/build/vitest (32 tests) and interactively in a real browser with requests artificially throttled to confirm each pending/disabled state actually appears and clears correctly, including the delete dialog staying open and disabled for the full duration of the request. Note: this testing deleted one real seed task from the local dev database (`Build UI for onboarding flow` on Platform Launch) — left as-is per instruction, not restored.
+- **Vercel Deployment Settings** (2026-10-23):
 
 - **Add Loading States to Server Requests** (2026-10-23): every client-triggered Server Action call now shows a visible pending state and disables its control while in flight — `BoardForm`/`TaskForm` submit buttons (via `useTransition` in `CreateBoardModal`/`EditBoardModal`/`AddTaskModal`/`EditTaskModal`), `TaskDetailsModal`'s subtask checkboxes (per-id pending set) and status `Select` (spinner next to the label), and `DeleteConfirmationDialog`. The dialog also now fixes a real bug: it previously closed immediately on click regardless of the async result; it now disables both buttons, shows a spinner, and only closes once `onConfirm` resolves. Added `loading.tsx` for `/dashboard` and `/dashboard/[slug]` (a shared `DashboardSkeleton` component) so navigation shows a skeleton instead of a blank screen while `getBoards()`/`getBoard()` resolve. No new dependencies. Verified via `tsc`/lint/build/vitest (32 tests) and interactively in a real browser with requests artificially throttled to confirm each pending/disabled state actually appears and clears correctly, including the delete dialog staying open and disabled for the full duration of the request. Note: this testing deleted one real seed task from the local dev database (`Build UI for onboarding flow` on Platform Launch) — left as-is per instruction, not restored.
 - **Vercel Deployment Settings** (2026-10-23): added `"postinstall": "prisma generate"` to `package.json` — without it, a fresh `npm install` on Vercel never generates the Prisma Client, failing the build/runtime with "@prisma/client did not initialize yet" (it only worked locally because the client had been generated manually before). Verified by deleting `node_modules/.prisma` and re-running `postinstall`, then `npm run build`/`npm test` (32 tests passing). Other deploy prerequisites checked and already satisfied: `MONGODB_URI` documented in `.env.example` (needs setting in Vercel's dashboard — a manual step, not code); no middleware, edge-incompatible APIs, or hardcoded localhost URLs; `src/lib/prisma.ts`'s singleton pattern is already serverless-safe; no `vercel.json` needed for this zero-config Next.js app.
