@@ -1,30 +1,20 @@
-# Current Feature: Add Loading States to Server Requests
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Every client-triggered Server Action call shows a visible pending/loading state while it's in flight, and the triggering control is disabled so it can't be re-fired mid-request:
-  - `BoardForm` submit button (used by `CreateBoardModal` → `createBoard`, `EditBoardModal` → `updateBoard`/`createColumn`/`updateColumn`/`deleteColumn`)
-  - `TaskForm` submit button (used by `AddTaskModal` → `createTask`, `EditTaskModal` → `updateTask`)
-  - `TaskDetailsModal`: subtask checkbox toggle (`toggleSubtask`), status `Select` change (`moveTask`), delete action
-  - `DeleteConfirmationDialog` (shared by board delete in `Header` and task delete in `TaskDetailsModal`): Delete/Cancel buttons disabled and Delete shows a pending state; the dialog should stay open until `onConfirm` resolves instead of closing immediately (currently closes synchronously before the async result is known)
-  - `Header` board delete flow
-- Add `loading.tsx` for the `/dashboard` and `/dashboard/[slug]` routes (both are async server components awaiting `getBoards()`/`getBoard()` with no fallback today), so navigation/refresh shows a loading state instead of a blank screen while data is fetched.
-- Drag-and-drop task move (`BoardView`) already gets instant feedback via `useOptimistic` — leave as-is unless review surfaces a gap (e.g. a failed move needs a visible rollback/error indicator, which it currently doesn't have).
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- No new dependencies — use React's `useTransition`/local `isPending` state, consistent with the existing `useOptimistic` + `startTransition` pattern already in `BoardView.tsx`.
-- These components call Server Actions imperatively (`await actionFn(...)`), not via `<form action={...}>`, so `useFormStatus` doesn't apply — wrap each async handler in `useTransition` (or a simple boolean state) instead.
-- Keep each component's existing error-handling (`result.success`/`setError`) intact; loading state is additive, not a replacement.
-- Match existing visual language (shadcn/ui `Button` `disabled` state, existing destructive/primary styling) rather than introducing a new spinner component if one isn't already in use — check `src/components/ui` first.
-- Scope is server-request loading feedback only; no unrelated refactors.
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
+- **Add Loading States to Server Requests** (2026-10-23): every client-triggered Server Action call now shows a visible pending state and disables its control while in flight — `BoardForm`/`TaskForm` submit buttons (via `useTransition` in `CreateBoardModal`/`EditBoardModal`/`AddTaskModal`/`EditTaskModal`), `TaskDetailsModal`'s subtask checkboxes (per-id pending set) and status `Select` (spinner next to the label), and `DeleteConfirmationDialog`. The dialog also now fixes a real bug: it previously closed immediately on click regardless of the async result; it now disables both buttons, shows a spinner, and only closes once `onConfirm` resolves. Added `loading.tsx` for `/dashboard` and `/dashboard/[slug]` (a shared `DashboardSkeleton` component) so navigation shows a skeleton instead of a blank screen while `getBoards()`/`getBoard()` resolve. No new dependencies. Verified via `tsc`/lint/build/vitest (32 tests) and interactively in a real browser with requests artificially throttled to confirm each pending/disabled state actually appears and clears correctly, including the delete dialog staying open and disabled for the full duration of the request. Note: this testing deleted one real seed task from the local dev database (`Build UI for onboarding flow` on Platform Launch) — left as-is per instruction, not restored.
 - **Vercel Deployment Settings** (2026-10-23): added `"postinstall": "prisma generate"` to `package.json` — without it, a fresh `npm install` on Vercel never generates the Prisma Client, failing the build/runtime with "@prisma/client did not initialize yet" (it only worked locally because the client had been generated manually before). Verified by deleting `node_modules/.prisma` and re-running `postinstall`, then `npm run build`/`npm test` (32 tests passing). Other deploy prerequisites checked and already satisfied: `MONGODB_URI` documented in `.env.example` (needs setting in Vercel's dashboard — a manual step, not code); no middleware, edge-incompatible APIs, or hardcoded localhost URLs; `src/lib/prisma.ts`'s singleton pattern is already serverless-safe; no `vercel.json` needed for this zero-config Next.js app.
 - **Board Slug in URL** (2026-10-21): board switching (sidebar, mobile switcher, header) now pushes `/dashboard/[slug]` — a slug derived from the board name at render time (kebab-case), not a persisted field — instead of only updating local state, so the active board is visible in the URL and survives refresh, direct links, and back/forward. `/dashboard` redirects to the first board's slug (or renders the zero-boards empty state); an unrecognized slug falls back the same way. Renaming a board (`EditBoardModal`) now navigates to its new slug instead of just refreshing; deleting the active board relies on the existing redirect chain to land on a remaining board with no extra code needed. Added `src/lib/slug.ts` (`slugify`/`findBoardBySlug`) with unit tests. Verified interactively via Playwright (sidebar navigation, direct slug load, invalid slug, back/forward, rename, create, delete). Known tradeoff (documented, not fixed): boards with duplicate names or a name that slugifies to an empty string are out of scope for this pass.
 - **Dashboard Phase 1 — Foundation** (2026-09-13): shadcn/ui initialized and themed to the Kanban 5-color palette (light/dark), `Plus Jakarta Sans` font, dark-mode-by-default, `Subtask`/`Task`/`Column`/`Board` types, mock data (3 boards), board moved to `/dashboard`. See `context/features/dashboard-phase-1-spec.md`. Next: phase 2 (static layout).
