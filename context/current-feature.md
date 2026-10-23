@@ -1,16 +1,30 @@
-# Current Feature
+# Current Feature: Vercel Deployment Settings
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Fix the missing Prisma Client generation step: `package.json` has no `postinstall` (or build-time) hook that runs `prisma generate`. Locally this works because the client was generated manually at some point (`node_modules/.prisma/client` exists), but a fresh `npm install` on Vercel won't generate it, and the build/runtime will fail with "@prisma/client did not initialize yet". Add `"postinstall": "prisma generate"` to `package.json` scripts.
+- Document the required environment variable for deployment: `MONGODB_URI` (already in `.env.example`) must be set in the Vercel project's Environment Variables (Production, and Preview/Development if those environments are used) — this is a manual dashboard step, not something committed to the repo.
+- Confirm no other blockers: no `middleware.ts`, no edge-runtime-incompatible Node APIs, no hardcoded `localhost` URLs, standard Next.js app — zero-config Vercel deploy should otherwise work without a `vercel.json`.
+- Re-verify `npm run build` passes after the `postinstall` change.
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Keep the loading-states feature (still queued, previously scoped: per-request pending states on all Server Action calls + `loading.tsx` for `/dashboard` routes) in mind for after this — not part of this feature's scope.
+- Don't add a `vercel.json` unless a concrete need shows up (e.g. custom regions/redirects) — zero-config is the default for Next.js on Vercel.
+- The existing `src/lib/prisma.ts` singleton pattern is already correct for serverless/production use; no change needed there.
+- Scope is deployment configuration only — no unrelated refactors.
+
+## History
+
+- **Board Slug in URL** (2026-10-21): board switching (sidebar, mobile switcher, header) now pushes `/dashboard/[slug]` — a slug derived from the board name at render time (kebab-case), not a persisted field — instead of only updating local state, so the active board is visible in the URL and survives refresh, direct links, and back/forward. `/dashboard` redirects to the first board's slug (or renders the zero-boards empty state); an unrecognized slug falls back the same way. Renaming a board (`EditBoardModal`) now navigates to its new slug instead of just refreshing; deleting the active board relies on the existing redirect chain to land on a remaining board with no extra code needed. Added `src/lib/slug.ts` (`slugify`/`findBoardBySlug`) with unit tests. Verified interactively via Playwright (sidebar navigation, direct slug load, invalid slug, back/forward, rename, create, delete). Known tradeoff (documented, not fixed): boards with duplicate names or a name that slugifies to an empty string are out of scope for this pass.
+- **Dashboard Phase 1 — Foundation** (2026-09-13): shadcn/ui initialized and themed to the Kanban 5-color palette (light/dark), `Plus Jakarta Sans` font, dark-mode-by-default, `Subtask`/`Task`/`Column`/`Board` types, mock data (3 boards), board moved to `/dashboard`. See `context/features/dashboard-phase-1-spec.md`. Next: phase 2 (static layout).
+- **Dashboard Phase 2 — Static Layout** (2026-09-13): full static layout at `/dashboard` — collapsible desktop sidebar, mobile drawer board switcher, header (inert Add Task button, unwired board options menu), board/column/task-card views wired to mock data via local `useState`, empty-board state. See `context/features/dashboard-phase-2-spec.md`. Verified via `tsc`/lint/build; not yet checked visually in a browser (Claude in Chrome declined this session). Next: phase 3 (state, working modals, drag-and-drop).
+- **Dashboard Phase 3 — State, Modals, Interactions & Polish** (2026-09-13): Zustand store (all `project-overview.md` §8 actions) with localStorage persistence; working Add/Edit Task, Task Details, Create/Edit Board, and Delete Confirmation modals (Zod-validated); column create/rename/delete via Edit Board; drag-and-drop between columns (dnd-kit) with the Task Details status dropdown as the keyboard alternative; hydration-aware loading state (fixed an SSR crash from zustand persist's default storage touching `window` on the server) and a zero-boards empty state. See `context/features/dashboard-phase-3-spec.md`. This closes out all 3 dashboard phases. Verified via `tsc`/lint/build only — not yet exercised in a real browser (drag-and-drop, forms, modal focus/keyboard behavior are unconfirmed interactively).
+- **MongoDB Persistence Migration** (2026-10-20): replaced Zustand's `localStorage` persistence with MongoDB (Prisma 6.19.3, `mongodb` provider) as the real source of truth. `src/actions/boards.ts`/`tasks.ts` implement every CRUD operation (Zod-validated, `{success,data,error}`) including drag-and-drop move; `/dashboard` is now an async server component reading via `getBoards()`; every modal and the dnd-kit drag flow (React 19 `useOptimistic` + `router.refresh()`) rewired off the Zustand store onto these Server Actions. `src/store/kanban-store.ts` and the `zustand` dependency removed entirely — no `localStorage` usage remains. `prisma/seed.ts` restores the 3 mock-data boards for local dev (`npm run db:seed`/`db:clear`). Vitest added (27 tests across `src/actions/*.test.ts`, Prisma mocked at the module boundary). Full CRUD flow verified interactively via Playwright against the real MongoDB cluster — including drag-and-drop surviving a hard reload and a cascade-delete confirmed directly via a Prisma query — which surfaced and led to fixing a pre-existing bug: the task Status `<Select>` showed the raw MongoDB `columnId` instead of the column name (base-ui's `Select.Value` needs an `items` label map). See `context/features/mongodb-persistence-spec.md`. Standards exception: this feature uses `prisma db push` instead of `migrate dev`, since Prisma Migrate doesn't support MongoDB at all.
 
 ## History
 
