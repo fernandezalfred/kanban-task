@@ -1,24 +1,20 @@
-# Current Feature: Vercel Deployment Settings
+# Current Feature
 
 ## Status
 
-In Progress
+<!-- Not Started | In Progress | Complete -->
 
 ## Goals
 
-- Fix the missing Prisma Client generation step: `package.json` has no `postinstall` (or build-time) hook that runs `prisma generate`. Locally this works because the client was generated manually at some point (`node_modules/.prisma/client` exists), but a fresh `npm install` on Vercel won't generate it, and the build/runtime will fail with "@prisma/client did not initialize yet". Add `"postinstall": "prisma generate"` to `package.json` scripts.
-- Document the required environment variable for deployment: `MONGODB_URI` (already in `.env.example`) must be set in the Vercel project's Environment Variables (Production, and Preview/Development if those environments are used) — this is a manual dashboard step, not something committed to the repo.
-- Confirm no other blockers: no `middleware.ts`, no edge-runtime-incompatible Node APIs, no hardcoded `localhost` URLs, standard Next.js app — zero-config Vercel deploy should otherwise work without a `vercel.json`.
-- Re-verify `npm run build` passes after the `postinstall` change.
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-- Keep the loading-states feature (still queued, previously scoped: per-request pending states on all Server Action calls + `loading.tsx` for `/dashboard` routes) in mind for after this — not part of this feature's scope.
-- Don't add a `vercel.json` unless a concrete need shows up (e.g. custom regions/redirects) — zero-config is the default for Next.js on Vercel.
-- The existing `src/lib/prisma.ts` singleton pattern is already correct for serverless/production use; no change needed there.
-- Scope is deployment configuration only — no unrelated refactors.
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
+
+- **Vercel Deployment Settings** (2026-10-23): added `"postinstall": "prisma generate"` to `package.json` — without it, a fresh `npm install` on Vercel never generates the Prisma Client, failing the build/runtime with "@prisma/client did not initialize yet" (it only worked locally because the client had been generated manually before). Verified by deleting `node_modules/.prisma` and re-running `postinstall`, then `npm run build`/`npm test` (32 tests passing). Other deploy prerequisites checked and already satisfied: `MONGODB_URI` documented in `.env.example` (needs setting in Vercel's dashboard — a manual step, not code); no middleware, edge-incompatible APIs, or hardcoded localhost URLs; `src/lib/prisma.ts`'s singleton pattern is already serverless-safe; no `vercel.json` needed for this zero-config Next.js app. Deferred: the previously-scoped "Add Loading States to Server Requests" feature (per-request pending states on all Server Action calls, `loading.tsx` for `/dashboard` routes) is still queued, not yet started.
 
 - **Board Slug in URL** (2026-10-21): board switching (sidebar, mobile switcher, header) now pushes `/dashboard/[slug]` — a slug derived from the board name at render time (kebab-case), not a persisted field — instead of only updating local state, so the active board is visible in the URL and survives refresh, direct links, and back/forward. `/dashboard` redirects to the first board's slug (or renders the zero-boards empty state); an unrecognized slug falls back the same way. Renaming a board (`EditBoardModal`) now navigates to its new slug instead of just refreshing; deleting the active board relies on the existing redirect chain to land on a remaining board with no extra code needed. Added `src/lib/slug.ts` (`slugify`/`findBoardBySlug`) with unit tests. Verified interactively via Playwright (sidebar navigation, direct slug load, invalid slug, back/forward, rename, create, delete). Known tradeoff (documented, not fixed): boards with duplicate names or a name that slugifies to an empty string are out of scope for this pass.
 - **Dashboard Phase 1 — Foundation** (2026-09-13): shadcn/ui initialized and themed to the Kanban 5-color palette (light/dark), `Plus Jakarta Sans` font, dark-mode-by-default, `Subtask`/`Task`/`Column`/`Board` types, mock data (3 boards), board moved to `/dashboard`. See `context/features/dashboard-phase-1-spec.md`. Next: phase 2 (static layout).
