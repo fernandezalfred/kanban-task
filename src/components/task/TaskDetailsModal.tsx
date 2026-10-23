@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, MoreVertical } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -59,7 +60,11 @@ export function TaskDetailsModal({
     setPendingSubtaskIds((prev) => new Set(prev).add(subtaskId));
     try {
       const result = await toggleSubtask({ subtaskId });
-      if (result.success) router.refresh();
+      if (result.success) {
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
     } finally {
       setPendingSubtaskIds((prev) => {
         const next = new Set(prev);
@@ -76,7 +81,11 @@ export function TaskDetailsModal({
         taskId: task.id,
         destinationColumnId: newColumnId,
       });
-      if (result.success) router.refresh();
+      if (result.success) {
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
     });
   }
 
@@ -85,6 +94,8 @@ export function TaskDetailsModal({
     if (result.success) {
       router.refresh();
       onOpenChange(false);
+    } else {
+      toast.error(result.error);
     }
   }
 

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -31,14 +32,12 @@ export function EditBoardModal({
 }: EditBoardModalProps) {
   const router = useRouter();
   const [formKey, setFormKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
     if (next) {
       setFormKey((key) => key + 1);
-      setError(null);
     }
   }
 
@@ -72,7 +71,7 @@ export function EditBoardModal({
 
       const results = await Promise.all(operations);
       if (results.some((result) => !result.success)) {
-        setError("Some changes failed to save. Please try again.");
+        toast.error("Some changes failed to save. Please try again.");
         return;
       }
 
@@ -103,7 +102,6 @@ export function EditBoardModal({
           onSubmit={handleSubmit}
           isSubmitting={isPending}
         />
-        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

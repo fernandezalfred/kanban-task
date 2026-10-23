@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,8 @@ export function Header({
     const result = await deleteBoardAction({ boardId: board.id });
     if (result.success) {
       router.refresh();
+    } else {
+      toast.error(result.error);
     }
   }
 

@@ -1,16 +1,30 @@
-# Current Feature
+# Current Feature: Toast Notifications for Errors
 
 ## Status
 
-<!-- Not Started | In Progress | Complete -->
+In Progress
 
 ## Goals
 
-<!-- Bullet points of what success looks like -->
+- Add `sonner` (the standard shadcn-paired toast lib) and mount a single `<Toaster />` in the root layout.
+- Replace the generic operation-level error surfacing currently done as inline `<p className="text-destructive">{error}</p>` + local `error` state with `toast.error(...)` in:
+  - `CreateBoardModal` (`createBoard` failure)
+  - `EditBoardModal` (`updateBoard`/`createColumn`/`updateColumn`/`deleteColumn` failure — the "Some changes failed to save" case)
+  - `AddTaskModal` (`createTask` failure)
+  - `EditTaskModal` (`updateTask` failure)
+- Add `toast.error(...)` for failures that are currently silently swallowed (no `result.success` check surfaces anything to the user today):
+  - `Header.handleDeleteBoard` (`deleteBoard` failure)
+  - `TaskDetailsModal.handleDeleteTask` (`deleteTask` failure)
+  - `TaskDetailsModal.handleToggleSubtask` (`toggleSubtask` failure)
+  - `TaskDetailsModal.handleStatusChange` (`moveTask` failure)
+  - `BoardView.handleDragEnd` (`moveTask` failure after a drag — the optimistic update currently has no visible rollback/error indicator)
 
 ## Notes
 
-<!-- Additional context, constraints, or details from spec -->
+- Scope is **error** toasts only, matching `coding-standards.md`'s "Display user-friendly error messages via toast" — not adding success toasts, which isn't what was asked.
+- Per-field Zod validation errors in `BoardForm`/`TaskForm` (`errors.name`, `errors.title`, `errors.columnId`, etc.) stay as inline text next to their field — that's correct UX for field-level validation and should NOT become toasts.
+- This builds on the loading-states feature just completed (pending states + `DeleteConfirmationDialog` fix) — toasts are the next layer: surfacing the *result* of a request, not just that one is in flight.
+- No other new dependencies beyond `sonner`.
 
 ## History
 

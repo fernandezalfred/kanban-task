@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -19,14 +20,12 @@ export function AddTaskModal({ board }: { board: Board }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (next) {
       setFormKey((key) => key + 1);
-      setError(null);
     }
   }
 
@@ -42,7 +41,7 @@ export function AddTaskModal({ board }: { board: Board }) {
       });
 
       if (!result.success) {
-        setError(result.error);
+        toast.error(result.error);
         return;
       }
 
@@ -83,7 +82,6 @@ export function AddTaskModal({ board }: { board: Board }) {
           onSubmit={handleSubmit}
           isSubmitting={isPending}
         />
-        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

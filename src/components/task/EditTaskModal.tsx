@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -29,14 +30,12 @@ export function EditTaskModal({
 }: EditTaskModalProps) {
   const router = useRouter();
   const [formKey, setFormKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
     if (next) {
       setFormKey((key) => key + 1);
-      setError(null);
     }
   }
 
@@ -57,7 +56,7 @@ export function EditTaskModal({
       });
 
       if (!result.success) {
-        setError(result.error);
+        toast.error(result.error);
         return;
       }
 
@@ -85,7 +84,6 @@ export function EditTaskModal({
           onSubmit={handleSubmit}
           isSubmitting={isPending}
         />
-        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

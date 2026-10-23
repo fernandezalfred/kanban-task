@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -19,14 +20,12 @@ export function CreateBoardModal({
 }) {
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (next) {
       setFormKey((key) => key + 1);
-      setError(null);
     }
   }
 
@@ -38,7 +37,7 @@ export function CreateBoardModal({
       });
 
       if (!result.success) {
-        setError(result.error);
+        toast.error(result.error);
         return;
       }
 
@@ -79,7 +78,6 @@ export function CreateBoardModal({
           onSubmit={handleSubmit}
           isSubmitting={isPending}
         />
-        {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
     </Dialog>
   );

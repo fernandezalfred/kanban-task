@@ -2,6 +2,7 @@
 
 import { startTransition, useOptimistic, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   DndContext,
   DragOverlay,
@@ -91,6 +92,8 @@ export function BoardView({ board }: { board: Board }) {
       const result = await moveTask({ taskId, destinationColumnId });
       if (result.success) {
         router.refresh();
+      } else {
+        toast.error(result.error);
       }
     });
   }
