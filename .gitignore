@@ -40,6 +40,9 @@ yarn-error.log*
 # local mcp server config
 .mcp.json
 
+# playwright mcp test artifacts
+.playwright-mcp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

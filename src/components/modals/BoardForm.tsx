@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,12 +16,14 @@ type BoardFormProps = {
   defaultValues: BoardFormValues;
   submitLabel: string;
   onSubmit: (values: BoardFormValues) => void;
+  isSubmitting?: boolean;
 };
 
 export function BoardForm({
   defaultValues,
   submitLabel,
   onSubmit,
+  isSubmitting = false,
 }: BoardFormProps) {
   const [name, setName] = useState(defaultValues.name);
   const [columns, setColumns] = useState(defaultValues.columns);
@@ -111,7 +113,12 @@ export function BoardForm({
         </Button>
       </div>
 
-      <Button type="submit" className="w-full rounded-full">
+      <Button
+        type="submit"
+        className="w-full rounded-full"
+        disabled={isSubmitting}
+      >
+        {isSubmitting && <Loader2 className="size-4 animate-spin" />}
         {submitLabel}
       </Button>
     </form>

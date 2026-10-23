@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +30,7 @@ type TaskFormProps = {
   defaultValues: TaskFormValues;
   submitLabel: string;
   onSubmit: (values: TaskFormValues) => void;
+  isSubmitting?: boolean;
 };
 
 export function TaskForm({
@@ -37,6 +38,7 @@ export function TaskForm({
   defaultValues,
   submitLabel,
   onSubmit,
+  isSubmitting = false,
 }: TaskFormProps) {
   const [title, setTitle] = useState(defaultValues.title);
   const [description, setDescription] = useState(defaultValues.description);
@@ -164,7 +166,12 @@ export function TaskForm({
         )}
       </div>
 
-      <Button type="submit" className="w-full rounded-full">
+      <Button
+        type="submit"
+        className="w-full rounded-full"
+        disabled={isSubmitting}
+      >
+        {isSubmitting && <Loader2 className="size-4 animate-spin" />}
         {submitLabel}
       </Button>
     </form>

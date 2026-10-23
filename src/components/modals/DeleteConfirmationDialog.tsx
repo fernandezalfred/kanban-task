@@ -1,5 +1,7 @@
 "use client";
 
+import { useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,7 @@ type DeleteConfirmationDialogProps = {
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
 };
 
 export function DeleteConfirmationDialog({
@@ -23,8 +25,22 @@ export function DeleteConfirmationDialog({
   description,
   onConfirm,
 }: DeleteConfirmationDialogProps) {
+  const [isDeleting, startTransition] = useTransition();
+
+  function handleConfirm() {
+    startTransition(async () => {
+      await onConfirm();
+      onOpenChange(false);
+    });
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!isDeleting) onOpenChange(next);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base font-bold text-destructive">
@@ -36,16 +52,16 @@ export function DeleteConfirmationDialog({
           <Button
             variant="destructive"
             className="flex-1 rounded-full"
-            onClick={() => {
-              onConfirm();
-              onOpenChange(false);
-            }}
+            disabled={isDeleting}
+            onClick={handleConfirm}
           >
+            {isDeleting && <Loader2 className="size-4 animate-spin" />}
             Delete
           </Button>
           <Button
             variant="secondary"
             className="flex-1 rounded-full"
+            disabled={isDeleting}
             onClick={() => onOpenChange(false)}
           >
             Cancel

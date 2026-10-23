@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -30,6 +30,7 @@ export function EditTaskModal({
   const router = useRouter();
   const [formKey, setFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     onOpenChange(next);
@@ -39,28 +40,30 @@ export function EditTaskModal({
     }
   }
 
-  async function handleSubmit(values: TaskFormValues) {
-    const result = await updateTask({
-      taskId: task.id,
-      columnId: values.columnId,
-      title: values.title,
-      description: values.description,
-      subtasks: values.subtasks.map((subtask) => ({
-        id: subtask.id,
-        title: subtask.title,
-        isCompleted:
-          task.subtasks.find((s) => s.id === subtask.id)?.isCompleted ??
-          false,
-      })),
+  function handleSubmit(values: TaskFormValues) {
+    startTransition(async () => {
+      const result = await updateTask({
+        taskId: task.id,
+        columnId: values.columnId,
+        title: values.title,
+        description: values.description,
+        subtasks: values.subtasks.map((subtask) => ({
+          id: subtask.id,
+          title: subtask.title,
+          isCompleted:
+            task.subtasks.find((s) => s.id === subtask.id)?.isCompleted ??
+            false,
+        })),
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      router.refresh();
+      onOpenChange(false);
     });
-
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-
-    router.refresh();
-    onOpenChange(false);
   }
 
   return (
@@ -80,6 +83,7 @@ export function EditTaskModal({
           }}
           submitLabel="Save Changes"
           onSubmit={handleSubmit}
+          isSubmitting={isPending}
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import {
@@ -20,6 +20,7 @@ export function AddTaskModal({ board }: { board: Board }) {
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -29,21 +30,25 @@ export function AddTaskModal({ board }: { board: Board }) {
     }
   }
 
-  async function handleSubmit(values: TaskFormValues) {
-    const result = await createTask({
-      columnId: values.columnId,
-      title: values.title,
-      description: values.description,
-      subtasks: values.subtasks.map((subtask) => ({ title: subtask.title })),
+  function handleSubmit(values: TaskFormValues) {
+    startTransition(async () => {
+      const result = await createTask({
+        columnId: values.columnId,
+        title: values.title,
+        description: values.description,
+        subtasks: values.subtasks.map((subtask) => ({
+          title: subtask.title,
+        })),
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      router.refresh();
+      setOpen(false);
     });
-
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-
-    router.refresh();
-    setOpen(false);
   }
 
   return (
@@ -76,6 +81,7 @@ export function AddTaskModal({ board }: { board: Board }) {
           }}
           submitLabel="Create Task"
           onSubmit={handleSubmit}
+          isSubmitting={isPending}
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>

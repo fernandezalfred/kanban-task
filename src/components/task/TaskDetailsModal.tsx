@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
+import { Loader2, MoreVertical } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -48,21 +48,36 @@ export function TaskDetailsModal({
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingSubtaskIds, setPendingSubtaskIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [isChangingStatus, startStatusChange] = useTransition();
 
   const completedCount = task.subtasks.filter((s) => s.isCompleted).length;
 
   async function handleToggleSubtask(subtaskId: string) {
-    const result = await toggleSubtask({ subtaskId });
-    if (result.success) router.refresh();
+    setPendingSubtaskIds((prev) => new Set(prev).add(subtaskId));
+    try {
+      const result = await toggleSubtask({ subtaskId });
+      if (result.success) router.refresh();
+    } finally {
+      setPendingSubtaskIds((prev) => {
+        const next = new Set(prev);
+        next.delete(subtaskId);
+        return next;
+      });
+    }
   }
 
-  async function handleStatusChange(newColumnId: string) {
+  function handleStatusChange(newColumnId: string) {
     if (newColumnId === columnId) return;
-    const result = await moveTask({
-      taskId: task.id,
-      destinationColumnId: newColumnId,
+    startStatusChange(async () => {
+      const result = await moveTask({
+        taskId: task.id,
+        destinationColumnId: newColumnId,
+      });
+      if (result.success) router.refresh();
     });
-    if (result.success) router.refresh();
   }
 
   async function handleDeleteTask() {
@@ -121,6 +136,7 @@ export function TaskDetailsModal({
                   >
                     <Checkbox
                       checked={subtask.isCompleted}
+                      disabled={pendingSubtaskIds.has(subtask.id)}
                       onCheckedChange={() => handleToggleSubtask(subtask.id)}
                     />
                     <span
@@ -138,10 +154,16 @@ export function TaskDetailsModal({
           )}
 
           <div className="flex flex-col gap-2">
-            <Label>Status</Label>
+            <Label>
+              Status
+              {isChangingStatus && (
+                <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+              )}
+            </Label>
             <Select
               items={Object.fromEntries(columns.map((column) => [column.id, column.name]))}
               value={columnId}
+              disabled={isChangingStatus}
               onValueChange={(value) => handleStatusChange(value as string)}
             >
               <SelectTrigger className="w-full">

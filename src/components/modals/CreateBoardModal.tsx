@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -20,6 +20,7 @@ export function CreateBoardModal({
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
@@ -29,19 +30,21 @@ export function CreateBoardModal({
     }
   }
 
-  async function handleSubmit(values: BoardFormValues) {
-    const result = await createBoard({
-      name: values.name,
-      columnNames: values.columns.map((column) => column.name),
+  function handleSubmit(values: BoardFormValues) {
+    startTransition(async () => {
+      const result = await createBoard({
+        name: values.name,
+        columnNames: values.columns.map((column) => column.name),
+      });
+
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      onCreated(result.data);
+      setOpen(false);
     });
-
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-
-    onCreated(result.data);
-    setOpen(false);
   }
 
   return (
@@ -74,6 +77,7 @@ export function CreateBoardModal({
           }}
           submitLabel="Create New Board"
           onSubmit={handleSubmit}
+          isSubmitting={isPending}
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
       </DialogContent>
